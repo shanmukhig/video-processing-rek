@@ -1,5 +1,5 @@
 
-this is a project developped using .net core tech stack, aws rekognition and tech stack for processing tutorial videos created.
+this is a project developped using .net core tech stack, aws rekognition and aws step functions for processing tutorial videos created.
 
 the video-final.mp4 can present what we are trying to achieve off this project.
 
