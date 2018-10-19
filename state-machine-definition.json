@@ -1,0 +1,215 @@
+{
+  "Comment": "a state machine which runs basic validation on video content uploaded by experts",
+  "StartAt": "1.0 check video for valid length",
+  "States": {
+    "1.0 check video for valid length": {
+      "Comment": "check the uploaded video length and make a decision",
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:video-length",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "1.1 validate the video length process results"
+    },
+    "1.1 validate the video length process results": {
+      "Comment": "if the video length is < 16 mins, proceed to next stage",
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result",
+          "BooleanEquals": true,
+          "Next": "2.0 check the video for unsafe content"
+        },
+        {
+          "Variable": "$.result",
+          "BooleanEquals": false,
+          "Next": "1.1.1 copy the length validation failed video to failed bucket"
+        }
+      ]
+    },
+    "3.0 check video for blank content": {
+      "Type": "Task",
+      "Comment": "check for blank video with no audio, blank video with audio, just white back ground etc.",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:blank-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "3.1 check video processing results for blank video"
+    },
+    "3.1 check video processing results for blank video":{
+      "Comment": "if the video length is < 16 mins, proceed to next stage",
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result",
+          "BooleanEquals": true,
+          "Next": "3.1.1 blank video found and copy video to failed bucket"
+        },
+        {
+          "Variable": "$.result",
+          "BooleanEquals": false,
+          "Next": "4.0 check video for instructor related issues"
+        }
+      ]
+    },
+    "2.0 check the video for unsafe content":{
+      "Type": "Task",
+      "Comment": "check video for any unsafe content",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:unsafe-content",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "2.1 check video processing results for unsafe video"
+    },
+    "2.1 check video processing results for unsafe video":{
+      "Comment": "see if the video has any unsafe content",
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result",
+          "BooleanEquals": false,
+          "Next": "3.0 check video for blank content"
+        },
+        {
+          "Variable": "$.result",
+          "BooleanEquals": true,
+          "Next": "2.1.1 unsafe video found and copy video to failed bucket"
+        }
+      ]
+    },
+    "4.0 check video for instructor related issues":{
+      "Type": "Task",
+      "Comment": "analyze video for different features like only one person present, lighting of video is good, person is visible thru-out the video, facial expressions are good etc.",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:person-tracking",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "4.1 check for instructor related issues and proceed"
+    },
+    "4.1 check for instructor related issues and proceed":{
+      "Comment": "check for different instructor related issues in the video",
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.result",
+          "NumericEquals": 1,
+          "Next": "4.1.1 only 1 person is allowed in the video and copy the video to failed bucket"
+        },
+        {
+          "Variable": "$.result",
+          "NumericEquals": 2,
+          "Next": "4.2.1 video quality is not good and copy the video to failed bucket"
+        },
+        {
+          "Variable": "$.result",
+          "NumericEquals": 3,
+          "Next": "4.3.1 instructor face is not clear and copy the video to failed bucket"
+        },
+        {
+          "Variable": "$.result",
+          "NumericEquals": 4,
+          "Next": "4.4.1 person expressions are not clear and copy the video to failed bucket"
+        },
+        {
+          "Variable": "$.result",
+          "NumericEquals": 0,
+          "Next": "5. copy the video to pass bucket as all the validations were passed"
+        }
+      ]
+    },
+    "4.1.1 only 1 person is allowed in the video and copy the video to failed bucket":{
+      "Type": "Task",
+      "Comment": "move video file to pass/fail bucket based on the status",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "4.1.2 fail the state machine instance as only one instructor is allowed in video"
+    },
+    "4.1.2 fail the state machine instance as only one instructor is allowed in video": {
+      "Type": "Fail",
+      "Cause": "more than one person present in the video, while only one expected"
+    },    
+    "4.2.1 video quality is not good and copy the video to failed bucket":{
+      "Type": "Task",
+      "Comment": "move video file to pass/fail bucket based on the status",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "4.2.2 fail the state machine instance as the video quality is not good"
+    },
+    "4.2.2 fail the state machine instance as the video quality is not good":{
+      "Type": "Fail",
+      "Cause": "video brightness is not good"
+    },
+    "4.3.1 instructor face is not clear and copy the video to failed bucket": {
+      "Type": "Task",
+      "Comment": "move video file to pass/fail bucket based on the status",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "4.3.2 fail the state machine instance as the instructor is not clearly visible"
+    },
+    "4.3.2 fail the state machine instance as the instructor is not clearly visible": {
+      "Type": "Fail",
+      "Cause": "instructor face is not clear, or skewed"
+    },
+    "4.4.1 person expressions are not clear and copy the video to failed bucket": {
+      "Type": "Task",
+      "Comment": "move video file to pass/fail bucket based on the status",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "4.4.2 fail the state machine instance as the person expressions were not good"
+    },
+    "4.4.2 fail the state machine instance as the person expressions were not good": {
+      "Type": "Fail",
+      "Cause": "instructor facial expressions are not acceptable"
+    },
+    "1.1.1 copy the length validation failed video to failed bucket":{
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "1.1.2 fail the video as the length exceeds max limit off 16mins"
+    },
+    "1.1.2 fail the video as the length exceeds max limit off 16mins": {
+      "Type": "Fail",
+      "Cause": "video length exceeded allowed length"
+    },
+    "2.1.1 unsafe video found and copy video to failed bucket":{
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "Next": "2.1.2 fail the state machine instance as it is unsafe content"
+    },
+    "2.1.2 fail the state machine instance as it is unsafe content": {
+      "Type": "Fail",
+      "Cause": "video contains unsafe content"
+    },
+    "3.1.1 blank video found and copy video to failed bucket": {
+      "Type": "Task",
+       "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+       "TimeoutSeconds": 300,
+       "HeartbeatSeconds": 60,
+       "Next": "3.1.2 fail the state machine instance as it is blank video"
+    },
+    "3.1.2 fail the state machine instance as it is blank video": {
+      "Type": "Fail",
+      "Cause": "video is blank"
+    },
+    "5. copy the video to pass bucket as all the validations were passed":{
+      "Type": "Task",
+      "Comment": "move video file to pass/fail bucket based on the status",
+      "Resource": "arn:aws:lambda:us-east-1:518495728486:function:copy-video",
+      "ResultPath": "$.result",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
+      "End": true
+    }
+  }
+}
