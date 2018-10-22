@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>Chegg.Hackathon.VideoLength.Tests</AssemblyName>
+    <PackageId>Chegg.Hackathon.VideoLength.Tests</PackageId>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <RuntimeFrameworkVersion>1.0.4</RuntimeFrameworkVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Chegg.Hackathon.VideoLength\Chegg.Hackathon.VideoLength.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Core" Version="3.3.27.2" />
+    <PackageReference Include="AWSSDK.Rekognition" Version="3.3.11.4" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.3.3.22" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20170106-08" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0-beta5-build1225" />
+    <PackageReference Include="Amazon.Lambda.Core" Version="1.0.0*" />
+    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="1.0.0*" />
+    <PackageReference Include="xunit" Version="2.2.0-beta5-build3474" />
+  </ItemGroup>
+
+</Project>
